@@ -38,6 +38,9 @@
 
   .summary-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(145px,1fr));gap:10px;margin-bottom:20px;}
   .summary-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:14px 16px;}
+  .summary-highlight{background:var(--blue-bg);border-color:#bfdbfe;}
+  .summary-highlight .summary-label{color:var(--blue);}
+  .summary-highlight .summary-value{color:var(--blue);}
   .summary-label{font-size:11px;color:var(--text-3);font-weight:500;margin-bottom:4px;text-transform:uppercase;letter-spacing:.05em;}
   .summary-value{font-size:21px;font-weight:600;color:var(--text);font-family:'DM Mono',monospace;}
 
@@ -47,6 +50,7 @@
   .mtab{padding:5px 13px;border-radius:var(--radius-sm);border:1px solid var(--border-strong);background:transparent;font-size:12px;font-weight:500;color:var(--text-2);cursor:pointer;transition:all .15s;font-family:'DM Sans',sans-serif;}
   .mtab:hover{border-color:var(--blue);color:var(--blue);}
   .mtab.active{background:var(--blue);color:#fff;border-color:var(--blue);}
+  .mtab.active-docs{background:#1d4ed8;color:#fff;border-color:#1d4ed8;}
 
   .ranking{display:flex;flex-direction:column;gap:6px;}
   .agent-row{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:11px 14px;transition:border-color .15s;}
@@ -447,6 +451,7 @@ const COLORS={71:'#2563eb',9:'#16a34a',81:'#d97706',53:'#dc2626',6:'#7c3aed',42:
 const MAIN_AGENTS=[71,9,81,53];
 const METRICS=[
   {key:'euros',   label:'€ gestionados',color:'#16a34a',fmt:v=>'€'+v.toLocaleString('es-ES')},
+  {key:'total_docs',label:'Total docs ★',color:'#1d4ed8',fmt:v=>v.toLocaleString('es-ES')},
   {key:'albaran', label:'Albaranes',    color:'#2563eb',fmt:v=>v.toLocaleString('es-ES')},
   {key:'factura', label:'Facturas',     color:'#7c3aed',fmt:v=>v.toLocaleString('es-ES')},
   {key:'pedidos', label:'Pedidos',      color:'#d97706',fmt:v=>v.toLocaleString('es-ES')},
@@ -482,6 +487,7 @@ function computeTotals(semanas){
     const a0=semanas.flatMap(s=>s.agents).find(a=>a.id===id);
     const obj={id,name:a0?.name||'?'};
     ['pedidos','albaran','factura','ruedas','euros','realizada','llamada','tel','web'].forEach(k=>obj[k]=agg(id,k,semanas));
+    obj.total_docs = obj.albaran + obj.factura + obj.pedidos;
     return obj;
   });
   if(selectedAgente!=='all') result=result.filter(t=>String(t.id)===String(selectedAgente));
@@ -493,12 +499,13 @@ function renderSummary(totals){
   document.getElementById('neg-note').style.display=totals.some(t=>t.euros<0)?'block':'none';
   document.getElementById('summary-cards').innerHTML=[
     {label:'Euros gestionados',value:'€'+gt('euros').toLocaleString('es-ES')},
+    {label:'Total docs ★',value:(gt('albaran')+gt('factura')+gt('pedidos')).toLocaleString('es-ES'),highlight:true},
     {label:'Albaranes',value:gt('albaran').toLocaleString('es-ES')},
     {label:'Facturas',value:gt('factura').toLocaleString('es-ES')},
     {label:'Pedidos',value:gt('pedidos').toLocaleString('es-ES')},
     {label:'Ruedas',value:gt('ruedas').toLocaleString('es-ES')},
     {label:'Llamadas',value:gt('llamada').toLocaleString('es-ES')},
-  ].map(c=>`<div class="summary-card"><div class="summary-label">${c.label}</div><div class="summary-value">${c.value}</div></div>`).join('');
+  ].map(c=>`<div class="summary-card${c.highlight?' summary-highlight':''}"><div class="summary-label">${c.label}</div><div class="summary-value">${c.value}</div></div>`).join('');
 }
 
 function getTurnoInfo(id,semanas){
