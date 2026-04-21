@@ -1,0 +1,612 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>KPIs Agentes — Rodamoto 2026</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap');
+
+  :root {
+    --bg: #f4f3ef;
+    --surface: #ffffff;
+    --surface2: #edecea;
+    --border: rgba(0,0,0,0.08);
+    --border-strong: rgba(0,0,0,0.15);
+    --text: #1a1917;
+    --text-2: #6b6963;
+    --text-3: #9e9a94;
+    --blue: #2563eb;
+    --blue-bg: #eff6ff;
+    --green: #16a34a;
+    --green-bg: #f0fdf4;
+    --amber: #d97706;
+    --amber-bg: #fffbeb;
+    --red: #dc2626;
+    --red-bg: #fef2f2;
+    --radius: 10px;
+    --radius-sm: 6px;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: 'DM Sans', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    font-size: 14px;
+    line-height: 1.5;
+  }
+
+  /* ── HEADER ── */
+  .header {
+    background: var(--text);
+    color: #fff;
+    padding: 20px 32px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+  .header-left { display: flex; align-items: center; gap: 14px; }
+  .header-logo {
+    width: 36px; height: 36px; background: #fff;
+    border-radius: 8px; display: flex; align-items: center;
+    justify-content: center; font-weight: 600; font-size: 16px; color: var(--text);
+  }
+  .header-title { font-size: 16px; font-weight: 500; }
+  .header-sub { font-size: 12px; color: rgba(255,255,255,0.5); margin-top: 1px; }
+  .header-date { font-size: 12px; color: rgba(255,255,255,0.4); font-family: 'DM Mono', monospace; }
+
+  /* ── LAYOUT ── */
+  .container { max-width: 1100px; margin: 0 auto; padding: 24px 24px 48px; }
+
+  /* ── FILTERS ── */
+  .filter-bar {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 14px 18px;
+    display: flex;
+    gap: 20px;
+    flex-wrap: wrap;
+    align-items: center;
+    margin-bottom: 20px;
+  }
+  .filter-group { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+  .filter-label { font-size: 11px; font-weight: 600; color: var(--text-3); text-transform: uppercase; letter-spacing: .06em; white-space: nowrap; }
+  .filter-sep { width: 1px; height: 20px; background: var(--border-strong); }
+
+  .pill {
+    padding: 5px 12px; border-radius: 20px;
+    border: 1px solid var(--border-strong);
+    background: transparent; font-size: 12px; font-weight: 500;
+    color: var(--text-2); cursor: pointer; transition: all .15s;
+    font-family: 'DM Sans', sans-serif;
+  }
+  .pill:hover { border-color: var(--blue); color: var(--blue); }
+  .pill.active { background: var(--text); color: #fff; border-color: var(--text); }
+
+  /* ── SUMMARY CARDS ── */
+  .summary-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+    gap: 10px;
+    margin-bottom: 20px;
+  }
+  .summary-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 14px 16px;
+  }
+  .summary-label { font-size: 11px; color: var(--text-3); font-weight: 500; margin-bottom: 4px; text-transform: uppercase; letter-spacing: .05em; }
+  .summary-value { font-size: 22px; font-weight: 600; color: var(--text); font-family: 'DM Mono', monospace; }
+  .summary-sub { font-size: 11px; color: var(--text-3); margin-top: 2px; }
+
+  /* ── SECTION TITLE ── */
+  .section-title {
+    font-size: 11px; font-weight: 600; color: var(--text-3);
+    text-transform: uppercase; letter-spacing: .08em;
+    margin: 22px 0 10px;
+  }
+
+  /* ── METRIC TABS ── */
+  .metric-tabs { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 12px; }
+  .mtab {
+    padding: 5px 13px; border-radius: var(--radius-sm);
+    border: 1px solid var(--border-strong);
+    background: transparent; font-size: 12px; font-weight: 500;
+    color: var(--text-2); cursor: pointer; transition: all .15s;
+    font-family: 'DM Sans', sans-serif;
+  }
+  .mtab:hover { border-color: var(--blue); color: var(--blue); }
+  .mtab.active { background: var(--blue); color: #fff; border-color: var(--blue); }
+
+  /* ── RANKING ── */
+  .ranking { display: flex; flex-direction: column; gap: 6px; }
+  .agent-row {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 11px 14px;
+    transition: border-color .15s;
+  }
+  .agent-row:hover { border-color: var(--border-strong); }
+  .agent-row.top { border-color: var(--blue); border-width: 1.5px; }
+  .agent-main { display: flex; align-items: center; gap: 10px; }
+  .rank-num { font-size: 12px; font-weight: 600; min-width: 24px; font-family: 'DM Mono', monospace; }
+  .rank-1 { color: #d97706; }
+  .rank-2 { color: #9ca3af; }
+  .rank-3 { color: #92400e; }
+  .rank-other { color: var(--text-3); }
+  .agent-name { font-size: 13px; font-weight: 600; min-width: 94px; color: var(--text); }
+  .bar-wrap { flex: 1; background: var(--surface2); border-radius: 4px; height: 6px; overflow: hidden; }
+  .bar-fill { height: 100%; border-radius: 4px; transition: width .4s ease; }
+  .metric-val { font-size: 13px; font-weight: 600; min-width: 90px; text-align: right; font-family: 'DM Mono', monospace; color: var(--text); }
+  .agent-meta { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 6px; margin-left: 34px; }
+
+  /* ── BADGES ── */
+  .badge { font-size: 10px; font-weight: 500; padding: 2px 8px; border-radius: 20px; }
+  .badge-ta { background: var(--green-bg); color: var(--green); border: 1px solid #bbf7d0; }
+  .badge-tb { background: var(--surface2); color: var(--text-2); border: 1px solid var(--border-strong); }
+  .badge-tc { background: var(--amber-bg); color: var(--amber); border: 1px solid #fde68a; }
+  .badge-vac { background: var(--red-bg); color: var(--red); border: 1px solid #fecaca; }
+  .badge-fest { background: var(--amber-bg); color: var(--amber); border: 1px solid #fde68a; }
+
+  /* ── TURNO LEGEND ── */
+  .turno-legend {
+    font-size: 11px; color: var(--text-2);
+    padding: 8px 12px; background: var(--surface2);
+    border-radius: var(--radius-sm);
+    margin-top: 8px;
+    line-height: 1.7;
+  }
+
+  /* ── CHART ── */
+  .chart-wrap {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 16px;
+    margin-top: 4px;
+  }
+  .chart-canvas-wrap { position: relative; width: 100%; height: 250px; }
+  .chart-legend { display: flex; flex-wrap: wrap; gap: 14px; margin-top: 12px; }
+  .chart-legend-item { display: flex; align-items: center; gap: 5px; font-size: 12px; color: var(--text-2); font-weight: 500; }
+  .legend-dot { width: 10px; height: 10px; border-radius: 2px; flex-shrink: 0; }
+
+  /* ── NEG NOTE ── */
+  .neg-note {
+    font-size: 11px; color: var(--red);
+    padding: 6px 12px; background: var(--red-bg);
+    border-radius: var(--radius-sm); margin-bottom: 10px;
+    border: 1px solid #fecaca; display: none;
+  }
+
+  /* ── FOOTER ── */
+  .footer {
+    text-align: center; font-size: 11px; color: var(--text-3);
+    margin-top: 40px; padding-top: 20px;
+    border-top: 1px solid var(--border);
+  }
+
+  @media (max-width: 600px) {
+    .header { padding: 14px 16px; flex-direction: column; align-items: flex-start; gap: 6px; }
+    .container { padding: 16px 12px 40px; }
+    .filter-bar { gap: 12px; }
+    .summary-value { font-size: 18px; }
+  }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div class="header-left">
+    <div class="header-logo">R</div>
+    <div>
+      <div class="header-title">KPIs Agentes Internos</div>
+      <div class="header-sub">Rodamoto · Enero – Abril 2026</div>
+    </div>
+  </div>
+  <div class="header-date" id="today-date"></div>
+</div>
+
+<div class="container">
+
+  <!-- FILTERS -->
+  <div class="filter-bar">
+    <div class="filter-group">
+      <span class="filter-label">Mes</span>
+      <div id="mes-pills" style="display:flex;gap:4px;flex-wrap:wrap;"></div>
+    </div>
+    <div class="filter-sep"></div>
+    <div class="filter-group">
+      <span class="filter-label">Semana</span>
+      <div id="semana-pills" style="display:flex;gap:4px;flex-wrap:wrap;"></div>
+    </div>
+  </div>
+
+  <!-- SUMMARY -->
+  <div class="summary-grid" id="summary-cards"></div>
+  <div class="neg-note" id="neg-note">⚠ Valores negativos en el período — posibles devoluciones o correcciones.</div>
+
+  <!-- RANKING -->
+  <div class="section-title">Ranking por métrica</div>
+  <div class="metric-tabs" id="metric-tabs"></div>
+  <div class="ranking" id="ranking"></div>
+  <div class="turno-legend">
+    🕐 <strong>Turnos rotativos (Andrea / Ana / Íñigo):</strong>
+    &nbsp;A = 7:00–15:00 <span style="color:#16a34a;font-weight:600;">★ ventaja apertura 7–9h</span>
+    &nbsp;·&nbsp; B = 9:00–18:00
+    &nbsp;·&nbsp; C = 11:00–19:00
+    &nbsp;&nbsp;|&nbsp;&nbsp;
+    🏖 ausencia &nbsp;·&nbsp; 🎉 festivo
+    &nbsp;&nbsp;|&nbsp;&nbsp;
+    Los badges aparecen al seleccionar una semana concreta.
+  </div>
+
+  <!-- CHART -->
+  <div class="section-title">Evolución semanal — euros gestionados</div>
+  <div class="chart-wrap">
+    <div class="chart-canvas-wrap">
+      <canvas id="weekChart" role="img" aria-label="Evolución semanal euros gestionados"></canvas>
+    </div>
+    <div class="chart-legend" id="chart-legend"></div>
+  </div>
+
+  <div class="footer">Rodamoto 2026 · Dashboard generado con datos internos · Uso exclusivo del equipo</div>
+</div>
+
+<script>
+document.getElementById('today-date').textContent = new Date().toLocaleDateString('es-ES',{weekday:'long',day:'numeric',month:'long',year:'numeric'});
+
+// ── DATA ──────────────────────────────────────────────────────────────────────
+const DATA = {
+  enero:{label:'Enero',semanas:[
+    {id:'E-S1',label:'S1 29dic–2ene',agents:[
+      {id:6,name:'ADOLFO',pedidos:0,albaran:69,factura:30,ruedas:134,euros:10364,realizada:0,llamada:0,tel:0,web:1},
+      {id:16,name:'ALMACEN',pedidos:0,albaran:0,factura:3,ruedas:6,euros:376,realizada:0,llamada:7,tel:0,web:0},
+      {id:9,name:'ANA',pedidos:0,albaran:2,factura:0,ruedas:0,euros:0,realizada:0,llamada:0,tel:0,web:0},
+      {id:42,name:'DAYANA',pedidos:0,albaran:0,factura:0,ruedas:0,euros:0,realizada:0,llamada:0,tel:0,web:0},
+      {id:53,name:'JESUS',pedidos:4,albaran:10,factura:2,ruedas:55,euros:2668,realizada:0,llamada:6,tel:2,web:10},
+      {id:71,name:'ANDREA',pedidos:9,albaran:287,factura:100,ruedas:560,euros:40360,realizada:2,llamada:15,tel:1,web:132},
+      {id:81,name:'IÑIGO',pedidos:3,albaran:126,factura:40,ruedas:247,euros:19010,realizada:0,llamada:10,tel:8,web:18},
+      {id:10,name:'VALENTIN',pedidos:2,albaran:26,factura:9,ruedas:81,euros:4675,realizada:0,llamada:2,tel:0,web:37},
+    ]},
+    {id:'E-S2',label:'S2 5–9ene',agents:[
+      {id:6,name:'ADOLFO',pedidos:0,albaran:49,factura:28,ruedas:101,euros:8002,realizada:0,llamada:0,tel:0,web:2},
+      {id:16,name:'ALMACEN',pedidos:0,albaran:0,factura:2,ruedas:3,euros:252,realizada:0,llamada:7,tel:0,web:0},
+      {id:9,name:'ANA',pedidos:5,albaran:201,factura:79,ruedas:424,euros:31763,realizada:0,llamada:6,tel:5,web:8},
+      {id:42,name:'DAYANA',pedidos:0,albaran:22,factura:5,ruedas:45,euros:2607,realizada:0,llamada:0,tel:0,web:1},
+      {id:53,name:'JESUS',pedidos:14,albaran:49,factura:40,ruedas:228,euros:14541,realizada:4,llamada:25,tel:14,web:76},
+      {id:71,name:'ANDREA',pedidos:17,albaran:315,factura:109,ruedas:708,euros:49783,realizada:1,llamada:37,tel:2,web:149},
+      {id:81,name:'IÑIGO',pedidos:13,albaran:64,factura:18,ruedas:232,euros:17045,realizada:0,llamada:11,tel:17,web:60},
+      {id:10,name:'VALENTIN',pedidos:0,albaran:0,factura:0,ruedas:0,euros:0,realizada:0,llamada:1,tel:0,web:0},
+    ]},
+    {id:'E-S3',label:'S3 12–16ene',agents:[
+      {id:6,name:'ADOLFO',pedidos:0,albaran:1,factura:0,ruedas:1,euros:109,realizada:0,llamada:0,tel:0,web:0},
+      {id:16,name:'ALMACEN',pedidos:0,albaran:0,factura:1,ruedas:2,euros:65,realizada:0,llamada:3,tel:1,web:0},
+      {id:9,name:'ANA',pedidos:8,albaran:322,factura:115,ruedas:693,euros:50676,realizada:0,llamada:8,tel:9,web:21},
+      {id:42,name:'DAYANA',pedidos:0,albaran:41,factura:20,ruedas:57,euros:3975,realizada:0,llamada:0,tel:0,web:0},
+      {id:53,name:'JESUS',pedidos:13,albaran:22,factura:7,ruedas:95,euros:4793,realizada:9,llamada:32,tel:13,web:8},
+      {id:71,name:'ANDREA',pedidos:22,albaran:244,factura:111,ruedas:687,euros:41147,realizada:1,llamada:35,tel:7,web:230},
+      {id:81,name:'IÑIGO',pedidos:11,albaran:82,factura:34,ruedas:221,euros:13717,realizada:2,llamada:21,tel:16,web:85},
+      {id:10,name:'VALENTIN',pedidos:3,albaran:1,factura:0,ruedas:8,euros:612,realizada:0,llamada:2,tel:2,web:1},
+    ]},
+    {id:'E-S4',label:'S4 19–23ene',agents:[
+      {id:6,name:'ADOLFO',pedidos:1,albaran:0,factura:1,ruedas:584,euros:52774,realizada:0,llamada:0,tel:0,web:0},
+      {id:16,name:'ALMACEN',pedidos:0,albaran:0,factura:4,ruedas:14,euros:510,realizada:0,llamada:6,tel:0,web:0},
+      {id:9,name:'ANA',pedidos:8,albaran:294,factura:108,ruedas:720,euros:52070,realizada:0,llamada:6,tel:5,web:34},
+      {id:42,name:'DAYANA',pedidos:1,albaran:28,factura:24,ruedas:27,euros:1545,realizada:0,llamada:0,tel:0,web:0},
+      {id:53,name:'JESUS',pedidos:9,albaran:26,factura:5,ruedas:133,euros:7980,realizada:8,llamada:36,tel:16,web:11},
+      {id:71,name:'ANDREA',pedidos:27,albaran:201,factura:109,ruedas:623,euros:39040,realizada:0,llamada:36,tel:4,web:175},
+      {id:81,name:'IÑIGO',pedidos:14,albaran:54,factura:20,ruedas:143,euros:8570,realizada:0,llamada:11,tel:12,web:67},
+      {id:10,name:'VALENTIN',pedidos:1,albaran:1,factura:0,ruedas:1,euros:29,realizada:0,llamada:2,tel:1,web:0},
+    ]},
+    {id:'E-S5',label:'S5 26–30ene',agents:[
+      {id:16,name:'ALMACEN',pedidos:2,albaran:0,factura:1,ruedas:9,euros:691,realizada:0,llamada:1,tel:1,web:0},
+      {id:9,name:'ANA',pedidos:7,albaran:284,factura:85,ruedas:568,euros:41749,realizada:0,llamada:9,tel:3,web:23},
+      {id:42,name:'DAYANA',pedidos:1,albaran:52,factura:21,ruedas:83,euros:6126,realizada:0,llamada:0,tel:0,web:2},
+      {id:53,name:'JESUS',pedidos:16,albaran:32,factura:10,ruedas:256,euros:11447,realizada:6,llamada:28,tel:19,web:15},
+      {id:71,name:'ANDREA',pedidos:15,albaran:220,factura:83,ruedas:477,euros:32559,realizada:2,llamada:35,tel:5,web:151},
+      {id:81,name:'IÑIGO',pedidos:8,albaran:50,factura:26,ruedas:149,euros:9162,realizada:1,llamada:16,tel:12,web:63},
+      {id:10,name:'VALENTIN',pedidos:2,albaran:0,factura:0,ruedas:665,euros:20591,realizada:0,llamada:3,tel:1,web:0},
+    ]},
+  ]},
+  febrero:{label:'Febrero',semanas:[
+    {id:'F-S1',label:'S1 2–6feb',agents:[
+      {id:6,name:'ADOLFO',pedidos:1,albaran:0,factura:0,ruedas:677,euros:56324,realizada:0,llamada:0,tel:0,web:0},
+      {id:16,name:'ALMACEN',pedidos:0,albaran:0,factura:2,ruedas:2,euros:92,realizada:0,llamada:1,tel:1,web:0},
+      {id:9,name:'ANA',pedidos:9,albaran:306,factura:90,ruedas:564,euros:41441,realizada:0,llamada:8,tel:11,web:27},
+      {id:42,name:'DAYANA',pedidos:2,albaran:124,factura:48,ruedas:229,euros:17501,realizada:0,llamada:0,tel:0,web:2},
+      {id:53,name:'JESUS',pedidos:12,albaran:55,factura:22,ruedas:180,euros:10007,realizada:1,llamada:28,tel:19,web:55},
+      {id:71,name:'ANDREA',pedidos:16,albaran:201,factura:83,ruedas:579,euros:33820,realizada:1,llamada:33,tel:5,web:171},
+      {id:81,name:'IÑIGO',pedidos:7,albaran:24,factura:13,ruedas:78,euros:4351,realizada:0,llamada:5,tel:9,web:33},
+      {id:10,name:'VALENTIN',pedidos:1,albaran:2,factura:0,ruedas:5,euros:334,realizada:0,llamada:0,tel:0,web:0},
+    ]},
+    {id:'F-S2',label:'S2 9–13feb',agents:[
+      {id:16,name:'ALMACEN',pedidos:0,albaran:1,factura:1,ruedas:2,euros:227,realizada:0,llamada:0,tel:0,web:0},
+      {id:9,name:'ANA',pedidos:12,albaran:188,factura:62,ruedas:390,euros:29453,realizada:0,llamada:3,tel:7,web:19},
+      {id:42,name:'DAYANA',pedidos:3,albaran:43,factura:24,ruedas:88,euros:6460,realizada:0,llamada:0,tel:0,web:0},
+      {id:53,name:'JESUS',pedidos:8,albaran:28,factura:11,ruedas:129,euros:7389,realizada:1,llamada:28,tel:11,web:22},
+      {id:71,name:'ANDREA',pedidos:12,albaran:404,factura:130,ruedas:865,euros:58197,realizada:3,llamada:24,tel:2,web:147},
+      {id:81,name:'IÑIGO',pedidos:19,albaran:99,factura:48,ruedas:495,euros:24643,realizada:0,llamada:21,tel:28,web:123},
+      {id:10,name:'VALENTIN',pedidos:0,albaran:0,factura:0,ruedas:0,euros:0,realizada:0,llamada:0,tel:0,web:0},
+    ]},
+    {id:'F-S3',label:'S3 16–20feb',agents:[
+      {id:16,name:'ALMACEN',pedidos:0,albaran:0,factura:2,ruedas:4,euros:222,realizada:0,llamada:3,tel:0,web:0},
+      {id:9,name:'ANA',pedidos:6,albaran:307,factura:107,ruedas:617,euros:49576,realizada:0,llamada:7,tel:8,web:15},
+      {id:42,name:'DAYANA',pedidos:0,albaran:4,factura:17,ruedas:-14,euros:-1115,realizada:0,llamada:0,tel:0,web:0},
+      {id:53,name:'JESUS',pedidos:14,albaran:28,factura:6,ruedas:174,euros:9301,realizada:8,llamada:36,tel:14,web:18},
+      {id:71,name:'ANDREA',pedidos:18,albaran:180,factura:80,ruedas:502,euros:32612,realizada:1,llamada:58,tel:9,web:178},
+      {id:81,name:'IÑIGO',pedidos:11,albaran:204,factura:65,ruedas:500,euros:33806,realizada:0,llamada:10,tel:22,web:143},
+      {id:10,name:'VALENTIN',pedidos:3,albaran:1,factura:0,ruedas:-2,euros:-227,realizada:0,llamada:0,tel:1,web:0},
+    ]},
+    {id:'F-S4',label:'S4 23–27feb',agents:[
+      {id:16,name:'ALMACEN',pedidos:0,albaran:0,factura:3,ruedas:3,euros:260,realizada:0,llamada:10,tel:0,web:1},
+      {id:9,name:'ANA',pedidos:7,albaran:383,factura:148,ruedas:812,euros:65689,realizada:0,llamada:10,tel:9,web:19},
+      {id:42,name:'DAYANA',pedidos:0,albaran:70,factura:33,ruedas:104,euros:9353,realizada:0,llamada:0,tel:0,web:2},
+      {id:53,name:'JESUS',pedidos:17,albaran:26,factura:13,ruedas:136,euros:9340,realizada:20,llamada:55,tel:19,web:19},
+      {id:71,name:'ANDREA',pedidos:23,albaran:301,factura:148,ruedas:753,euros:53947,realizada:0,llamada:50,tel:5,web:283},
+      {id:81,name:'IÑIGO',pedidos:17,albaran:112,factura:53,ruedas:322,euros:22343,realizada:0,llamada:36,tel:31,web:125},
+      {id:10,name:'VALENTIN',pedidos:1,albaran:2,factura:0,ruedas:4,euros:340,realizada:0,llamada:2,tel:1,web:0},
+    ]},
+  ]},
+  marzo:{label:'Marzo',semanas:[
+    {id:'M-S1',label:'S1 2–6mar',agents:[
+      {id:16,name:'ALMACEN',pedidos:0,albaran:1,factura:7,ruedas:15,euros:747,realizada:0,llamada:2,tel:1,web:0},
+      {id:9,name:'ANA',pedidos:19,albaran:179,factura:81,ruedas:435,euros:32926,realizada:0,llamada:10,tel:17,web:102},
+      {id:42,name:'DAYANA',pedidos:7,albaran:186,factura:48,ruedas:337,euros:29812,realizada:0,llamada:0,tel:0,web:7},
+      {id:53,name:'JESUS',pedidos:18,albaran:70,factura:30,ruedas:230,euros:13653,realizada:2,llamada:39,tel:25,web:69},
+      {id:71,name:'ANDREA',pedidos:26,albaran:516,factura:152,ruedas:1151,euros:91872,realizada:0,llamada:33,tel:2,web:135},
+      {id:81,name:'IÑIGO',pedidos:19,albaran:112,factura:53,ruedas:355,euros:23440,realizada:3,llamada:35,tel:38,web:104},
+      {id:10,name:'VALENTIN',pedidos:1,albaran:3,factura:2,ruedas:6,euros:315,realizada:0,llamada:2,tel:3,web:0},
+    ]},
+    {id:'M-S2',label:'S2 9–13mar',agents:[
+      {id:7,name:'MARTIN',pedidos:1,albaran:0,factura:0,ruedas:5,euros:549,realizada:0,llamada:0,tel:0,web:0},
+      {id:16,name:'ALMACEN',pedidos:0,albaran:0,factura:4,ruedas:6,euros:427,realizada:0,llamada:3,tel:2,web:0},
+      {id:9,name:'ANA',pedidos:21,albaran:181,factura:87,ruedas:486,euros:34290,realizada:0,llamada:18,tel:16,web:132},
+      {id:42,name:'DAYANA',pedidos:3,albaran:122,factura:26,ruedas:228,euros:19039,realizada:0,llamada:0,tel:0,web:6},
+      {id:53,name:'JESUS',pedidos:15,albaran:65,factura:39,ruedas:284,euros:16536,realizada:0,llamada:29,tel:22,web:78},
+      {id:71,name:'ANDREA',pedidos:18,albaran:425,factura:122,ruedas:1006,euros:67130,realizada:1,llamada:38,tel:7,web:147},
+      {id:81,name:'IÑIGO',pedidos:7,albaran:59,factura:14,ruedas:107,euros:7972,realizada:0,llamada:24,tel:15,web:6},
+      {id:10,name:'VALENTIN',pedidos:1,albaran:1,factura:4,ruedas:7,euros:535,realizada:0,llamada:2,tel:3,web:3},
+    ]},
+    {id:'M-S3',label:'S3 16–20mar',agents:[
+      {id:16,name:'ALMACEN',pedidos:0,albaran:0,factura:2,ruedas:3,euros:124,realizada:0,llamada:0,tel:0,web:0},
+      {id:9,name:'ANA',pedidos:5,albaran:233,factura:67,ruedas:409,euros:35179,realizada:0,llamada:6,tel:5,web:11},
+      {id:42,name:'DAYANA',pedidos:7,albaran:316,factura:89,ruedas:582,euros:47765,realizada:0,llamada:0,tel:0,web:9},
+      {id:53,name:'JESUS',pedidos:16,albaran:34,factura:10,ruedas:138,euros:8977,realizada:3,llamada:36,tel:13,web:32},
+      {id:71,name:'ANDREA',pedidos:23,albaran:321,factura:129,ruedas:819,euros:59337,realizada:1,llamada:31,tel:8,web:208},
+      {id:81,name:'IÑIGO',pedidos:14,albaran:106,factura:30,ruedas:285,euros:20483,realizada:0,llamada:33,tel:20,web:66},
+      {id:10,name:'VALENTIN',pedidos:0,albaran:0,factura:0,ruedas:0,euros:0,realizada:0,llamada:0,tel:0,web:0},
+    ]},
+    {id:'M-S4',label:'S4 23–27mar',agents:[
+      {id:16,name:'ALMACEN',pedidos:0,albaran:1,factura:8,ruedas:14,euros:879,realizada:0,llamada:3,tel:0,web:0},
+      {id:9,name:'ANA',pedidos:16,albaran:273,factura:79,ruedas:573,euros:43949,realizada:0,llamada:13,tel:22,web:32},
+      {id:42,name:'DAYANA',pedidos:5,albaran:130,factura:48,ruedas:1076,euros:87455,realizada:0,llamada:0,tel:0,web:5},
+      {id:53,name:'JESUS',pedidos:18,albaran:100,factura:52,ruedas:407,euros:26404,realizada:0,llamada:54,tel:35,web:104},
+      {id:71,name:'ANDREA',pedidos:28,albaran:517,factura:167,ruedas:1070,euros:83950,realizada:0,llamada:32,tel:5,web:172},
+      {id:81,name:'IÑIGO',pedidos:20,albaran:86,factura:44,ruedas:438,euros:24856,realizada:0,llamada:21,tel:33,web:107},
+      {id:10,name:'VALENTIN',pedidos:2,albaran:1,factura:4,ruedas:10,euros:523,realizada:0,llamada:1,tel:5,web:0},
+    ]},
+    {id:'M-S5',label:'S5 30–31mar',agents:[
+      {id:16,name:'ALMACEN',pedidos:1,albaran:1,factura:5,ruedas:13,euros:1563,realizada:0,llamada:9,tel:1,web:0},
+      {id:9,name:'ANA',pedidos:5,albaran:276,factura:48,ruedas:460,euros:37571,realizada:0,llamada:2,tel:10,web:13},
+      {id:42,name:'DAYANA',pedidos:0,albaran:1,factura:1,ruedas:0,euros:0,realizada:0,llamada:0,tel:0,web:0},
+      {id:53,name:'JESUS',pedidos:10,albaran:28,factura:12,ruedas:130,euros:8086,realizada:0,llamada:14,tel:10,web:24},
+      {id:71,name:'ANDREA',pedidos:13,albaran:76,factura:56,ruedas:274,euros:18621,realizada:0,llamada:34,tel:5,web:121},
+      {id:81,name:'IÑIGO',pedidos:4,albaran:67,factura:62,ruedas:166,euros:13845,realizada:0,llamada:15,tel:8,web:14},
+      {id:10,name:'VALENTIN',pedidos:3,albaran:2,factura:1,ruedas:8,euros:817,realizada:1,llamada:1,tel:6,web:0},
+    ]},
+  ]},
+  abril:{label:'Abril',semanas:[
+    {id:'A-S1',label:'S1 1–3abr',agents:[
+      {id:16,name:'ALMACEN',pedidos:1,albaran:1,factura:1,ruedas:2,euros:185,realizada:0,llamada:2,tel:0,web:0},
+      {id:9,name:'ANA',pedidos:0,albaran:103,factura:22,ruedas:178,euros:14556,realizada:0,llamada:2,tel:2,web:2},
+      {id:42,name:'DAYANA',pedidos:0,albaran:0,factura:0,ruedas:0,euros:0,realizada:0,llamada:0,tel:0,web:0},
+      {id:53,name:'JESUS',pedidos:0,albaran:0,factura:0,ruedas:0,euros:0,realizada:0,llamada:0,tel:0,web:0},
+      {id:71,name:'ANDREA',pedidos:14,albaran:26,factura:22,ruedas:148,euros:10026,realizada:0,llamada:5,tel:1,web:46},
+      {id:81,name:'IÑIGO',pedidos:5,albaran:20,factura:16,ruedas:68,euros:4734,realizada:0,llamada:4,tel:5,web:13},
+      {id:10,name:'VALENTIN',pedidos:0,albaran:0,factura:0,ruedas:0,euros:0,realizada:0,llamada:1,tel:0,web:0},
+    ]},
+    {id:'A-S2',label:'S2 6–10abr',agents:[
+      {id:16,name:'ALMACEN',pedidos:0,albaran:2,factura:2,ruedas:3,euros:103,realizada:0,llamada:1,tel:1,web:0},
+      {id:9,name:'ANA',pedidos:17,albaran:490,factura:196,ruedas:1017,euros:82551,realizada:0,llamada:8,tel:8,web:13},
+      {id:42,name:'DAYANA',pedidos:6,albaran:149,factura:62,ruedas:304,euros:26714,realizada:0,llamada:0,tel:0,web:9},
+      {id:53,name:'JESUS',pedidos:20,albaran:58,factura:35,ruedas:230,euros:17070,realizada:2,llamada:55,tel:26,web:70},
+      {id:71,name:'ANDREA',pedidos:35,albaran:460,factura:176,ruedas:1064,euros:77513,realizada:1,llamada:67,tel:7,web:311},
+      {id:81,name:'IÑIGO',pedidos:23,albaran:101,factura:42,ruedas:248,euros:18286,realizada:0,llamada:45,tel:46,web:79},
+      {id:10,name:'VALENTIN',pedidos:3,albaran:5,factura:3,ruedas:45,euros:2880,realizada:0,llamada:2,tel:4,web:6},
+    ]},
+    {id:'A-S3',label:'S3 13–17abr',agents:[
+      {id:16,name:'ALMACEN',pedidos:0,albaran:0,factura:8,ruedas:9,euros:720,realizada:0,llamada:2,tel:4,web:0},
+      {id:9,name:'ANA',pedidos:9,albaran:116,factura:52,ruedas:308,euros:22375,realizada:0,llamada:9,tel:13,web:82},
+      {id:42,name:'DAYANA',pedidos:4,albaran:108,factura:53,ruedas:158,euros:13729,realizada:0,llamada:0,tel:0,web:4},
+      {id:44,name:'SANTIAGO',pedidos:0,albaran:56,factura:17,ruedas:95,euros:8304,realizada:0,llamada:0,tel:0,web:0},
+      {id:53,name:'JESUS',pedidos:24,albaran:73,factura:44,ruedas:1355,euros:50997,realizada:2,llamada:43,tel:21,web:94},
+      {id:71,name:'ANDREA',pedidos:33,albaran:619,factura:229,ruedas:1195,euros:94595,realizada:0,llamada:40,tel:6,web:167},
+      {id:81,name:'IÑIGO',pedidos:19,albaran:81,factura:51,ruedas:259,euros:18658,realizada:0,llamada:31,tel:31,web:106},
+      {id:10,name:'VALENTIN',pedidos:0,albaran:0,factura:0,ruedas:0,euros:0,realizada:0,llamada:0,tel:0,web:0},
+    ]},
+  ]},
+};
+
+const AUSENCIAS = {
+  'E-S1':{9:{dias:2,motivo:'Vacas 2025'},53:{dias:2,motivo:'Vacas 2025'},81:{dias:3,motivo:'Vacaciones'}},
+  'E-S2':{81:{dias:1,motivo:'Vacaciones (vie 9)'}},
+  'E-S3':{81:{dias:1,motivo:'Vacaciones (vie 16)'}},
+  'E-S5':{81:{dias:1,motivo:'Vacaciones (vie 30)'}},
+  'F-S1':{81:{dias:4,motivo:'Vacaciones (2–5 feb)'},71:{dias:1,motivo:'Permiso (vie 6)'},53:{dias:1,motivo:'Vacas 2025 (vie 6)'}},
+  'F-S3':{42:{dias:2,motivo:'Inventario 2025 (lun–mar)'}},
+  'M-S2':{53:{dias:1,motivo:'Inventario Madrid (vie 13)'}},
+  'M-S3':{9:{dias:1,motivo:'Vacaciones (vie 20)'},53:{dias:1,motivo:'Inventario Vigo 5h'}},
+  'M-S4':{81:{dias:2,motivo:'Vacaciones (jue–vie 26–27)'}},
+  'M-S5':{42:{dias:2,motivo:'Vacaciones (lun–mar 30–31)'}},
+  'A-S1':{53:{dias:3,motivo:'Semana corta (3 días)'},42:{dias:3,motivo:'Semana corta (3 días)'}},
+  'A-S3':{10:{dias:5,motivo:'Vacaciones semana completa'}},
+};
+const FESTIVOS = {
+  'E-S1':[{fecha:'Jue 1 ene',nombre:'Año Nuevo'}],
+  'E-S2':[{fecha:'Mié 7 ene',nombre:'Festivo local'}],
+  'M-S3':[{fecha:'Jue 19 mar',nombre:'Festivo Nacional'}],
+  'A-S1':[{fecha:'Jue 2 abr',nombre:'Festivo Nacional'},{fecha:'Vie 3 abr',nombre:'Festivo Nacional'}],
+};
+const TURNOS = {
+  'E-S1':{81:'B',9:'C',71:'C'},'E-S2':{81:'B',9:'B',71:'A'},'E-S3':{81:'C',9:'A',71:'B'},
+  'E-S4':{81:'C',9:'A',71:'B'},'E-S5':{81:'C',9:'B',71:'C'},
+  'F-S1':{81:'C',9:'A',71:'C'},'F-S2':{81:'B',9:'C',71:'A'},'F-S3':{81:'A',9:'B',71:'C'},'F-S4':{81:'C',9:'A',71:'B'},
+  'M-S1':{81:'C',9:'B',71:'A'},'M-S2':{81:'B',9:'B',71:'C'},'M-S3':{81:'C',9:'A',71:'B'},
+  'M-S4':{81:'A',9:'C',71:'A'},'M-S5':{81:'A',9:'B',71:'C'},
+  'A-S1':{81:'B',9:'A',71:'B'},'A-S2':{81:'C',9:'C',71:'A'},'A-S3':{81:'A',9:'B',71:'C'},
+};
+
+const COLORS={71:'#2563eb',9:'#16a34a',81:'#d97706',53:'#dc2626',6:'#7c3aed',42:'#db2777',10:'#6b7280',16:'#059669',7:'#0891b2',44:'#9a3412'};
+const MAIN_AGENTS=[71,9,81,53];
+const METRICS=[
+  {key:'euros',   label:'€ gestionados',color:'#16a34a',fmt:v=>'€'+v.toLocaleString('es-ES')},
+  {key:'albaran', label:'Albaranes',    color:'#2563eb',fmt:v=>v.toLocaleString('es-ES')},
+  {key:'factura', label:'Facturas',     color:'#7c3aed',fmt:v=>v.toLocaleString('es-ES')},
+  {key:'pedidos', label:'Pedidos',      color:'#d97706',fmt:v=>v.toLocaleString('es-ES')},
+  {key:'ruedas',  label:'Ruedas',       color:'#dc2626',fmt:v=>v.toLocaleString('es-ES')},
+  {key:'llamada', label:'Llamadas',     color:'#6b7280',fmt:v=>v.toLocaleString('es-ES')},
+  {key:'tel',     label:'Ped. teléfono',color:'#059669',fmt:v=>v.toLocaleString('es-ES')},
+  {key:'web',     label:'Ped. web',     color:'#db2777',fmt:v=>v.toLocaleString('es-ES')},
+];
+
+let selectedMes='all', selectedSemana='all', activeMetric=METRICS[0], chart=null;
+
+const getSemanas=()=>selectedMes==='all'?Object.values(DATA).flatMap(m=>m.semanas):DATA[selectedMes].semanas;
+const getFiltered=()=>{ const s=getSemanas(); return selectedSemana==='all'?s:s.filter(x=>x.id===selectedSemana); };
+const agg=(id,key,semanas)=>semanas.reduce((a,s)=>{const ag=s.agents.find(x=>x.id===id);return a+(ag?ag[key]:0);},0);
+
+function computeTotals(semanas){
+  const ids=new Set();
+  semanas.forEach(s=>s.agents.forEach(a=>{
+    if(['pedidos','albaran','factura','ruedas','euros','realizada','llamada','tel','web'].some(k=>a[k]!==0)) ids.add(a.id);
+  }));
+  return [...ids].map(id=>{
+    const a0=semanas.flatMap(s=>s.agents).find(a=>a.id===id);
+    const obj={id,name:a0?.name||'?'};
+    ['pedidos','albaran','factura','ruedas','euros','realizada','llamada','tel','web'].forEach(k=>obj[k]=agg(id,k,semanas));
+    return obj;
+  });
+}
+
+function renderSummary(totals){
+  const gt=k=>totals.reduce((a,t)=>a+t[k],0);
+  document.getElementById('neg-note').style.display=totals.some(t=>t.euros<0)?'block':'none';
+  document.getElementById('summary-cards').innerHTML=[
+    {label:'Euros gestionados',value:'€'+gt('euros').toLocaleString('es-ES')},
+    {label:'Albaranes',value:gt('albaran').toLocaleString('es-ES')},
+    {label:'Facturas',value:gt('factura').toLocaleString('es-ES')},
+    {label:'Pedidos',value:gt('pedidos').toLocaleString('es-ES')},
+    {label:'Ruedas',value:gt('ruedas').toLocaleString('es-ES')},
+    {label:'Llamadas',value:gt('llamada').toLocaleString('es-ES')},
+  ].map(c=>`<div class="summary-card"><div class="summary-label">${c.label}</div><div class="summary-value">${c.value}</div></div>`).join('');
+}
+
+function getCtx(id,semanas){
+  if(selectedSemana==='all'||!semanas[0]) return null;
+  const sid=semanas[0].id;
+  return {ausencia:AUSENCIAS[sid]?.[id],turno:TURNOS[sid]?.[id]||null,festivos:FESTIVOS[sid]||[]};
+}
+
+function renderRanking(totals,semanas){
+  const sorted=[...totals].sort((a,b)=>b[activeMetric.key]-a[activeMetric.key]);
+  const max=Math.max(...sorted.map(a=>a[activeMetric.key]),1);
+  const rc=['rank-1','rank-2','rank-3'];
+  document.getElementById('ranking').innerHTML=sorted.map((a,i)=>{
+    const pct=Math.max(0,Math.round(a[activeMetric.key]/max*100));
+    const ctx=getCtx(a.id,semanas);
+    let badges='';
+    if(ctx){
+      if(ctx.turno){
+        const cls=ctx.turno==='A'?'badge-ta':ctx.turno==='B'?'badge-tb':'badge-tc';
+        badges+=`<span class="badge ${cls}">Turno ${ctx.turno}${ctx.turno==='A'?' ★':''}</span>`;
+      }
+      if(ctx.ausencia) badges+=`<span class="badge badge-vac">🏖 ${ctx.ausencia.dias}d — ${ctx.ausencia.motivo}</span>`;
+      ctx.festivos.forEach(f=>{ badges+=`<span class="badge badge-fest">🎉 ${f.fecha} ${f.nombre}</span>`; });
+    }
+    return `<div class="agent-row ${i===0?'top':''}">
+      <div class="agent-main">
+        <span class="rank-num ${rc[i]||'rank-other'}">#${i+1}</span>
+        <span class="agent-name">${a.name}</span>
+        <div class="bar-wrap"><div class="bar-fill" style="width:${pct}%;background:${activeMetric.color};"></div></div>
+        <span class="metric-val">${activeMetric.fmt(a[activeMetric.key])}</span>
+      </div>
+      ${badges?`<div class="agent-meta">${badges}</div>`:''}
+    </div>`;
+  }).join('');
+}
+
+function renderChart(semanas){
+  const labels=semanas.map(s=>s.label);
+  const datasets=MAIN_AGENTS.map(id=>({
+    label:semanas.flatMap(s=>s.agents).find(a=>a.id===id)?.name||String(id),
+    data:semanas.map(s=>{const a=s.agents.find(x=>x.id===id);return a?a.euros:0;}),
+    borderColor:COLORS[id],backgroundColor:COLORS[id]+'18',tension:0.35,fill:false,pointRadius:4,pointHoverRadius:6,borderWidth:2,
+  }));
+  if(chart) chart.destroy();
+  chart=new Chart(document.getElementById('weekChart'),{
+    type:'line',data:{labels,datasets},
+    options:{responsive:true,maintainAspectRatio:false,
+      plugins:{legend:{display:false},tooltip:{callbacks:{label:ctx=>ctx.dataset.label+': €'+Math.round(ctx.parsed.y).toLocaleString('es-ES')}}},
+      scales:{
+        y:{ticks:{callback:v=>'€'+Math.round(v).toLocaleString('es-ES'),font:{family:'DM Mono',size:11}},grid:{color:'rgba(0,0,0,0.05)'},border:{display:false}},
+        x:{ticks:{autoSkip:false,maxRotation:25,font:{family:'DM Sans',size:11}},grid:{display:false},border:{display:false}}
+      }
+    }
+  });
+  document.getElementById('chart-legend').innerHTML=MAIN_AGENTS.map(id=>{
+    const name=semanas.flatMap(s=>s.agents).find(a=>a.id===id)?.name||String(id);
+    return `<div class="chart-legend-item"><span class="legend-dot" style="background:${COLORS[id]};"></span>${name}</div>`;
+  }).join('');
+}
+
+function renderSemanasPills(){
+  const semanas=getSemanas();
+  document.getElementById('semana-pills').innerHTML=
+    `<button class="pill ${selectedSemana==='all'?'active':''}" onclick="selectSemana('all')">Todas</button>`+
+    semanas.map(s=>`<button class="pill ${selectedSemana===s.id?'active':''}" onclick="selectSemana('${s.id}')">${s.label}</button>`).join('');
+}
+
+function selectSemana(id){ selectedSemana=id; renderSemanasPills(); update(); }
+
+function update(){
+  const filtered=getFiltered();
+  const totals=computeTotals(filtered);
+  renderSummary(totals);
+  renderRanking(totals,filtered);
+  renderChart(selectedSemana==='all'?getSemanas():filtered);
+}
+
+// Init
+document.getElementById('mes-pills').innerHTML=
+  `<button class="pill active" onclick="selectMes('all')">Todos</button>`+
+  Object.entries(DATA).map(([k,v])=>`<button class="pill" onclick="selectMes('${k}')">${v.label}</button>`).join('');
+
+function selectMes(m){
+  selectedMes=m; selectedSemana='all';
+  document.querySelectorAll('#mes-pills .pill').forEach(p=>p.classList.remove('active'));
+  event.target.classList.add('active');
+  renderSemanasPills(); update();
+}
+
+document.getElementById('metric-tabs').innerHTML=METRICS.map((m,i)=>
+  `<button class="mtab ${i===0?'active':''}" onclick="selectMetric(${i},this)">${m.label}</button>`).join('');
+
+function selectMetric(i,btn){
+  document.querySelectorAll('.mtab').forEach(t=>t.classList.remove('active'));
+  btn.classList.add('active');
+  activeMetric=METRICS[i];
+  renderRanking(computeTotals(getFiltered()),getFiltered());
+}
+
+renderSemanasPills();
+update();
+</script>
+</body>
+</html>
