@@ -107,7 +107,7 @@
     <div class="header-logo">R</div>
     <div>
       <div class="header-title">KPIs Agentes Internos</div>
-      <div class="header-sub">Rodamoto · Enero – Abril 2026</div>
+      <div class="header-sub">Rodamoto · Enero – Mayo 2026</div>
     </div>
   </div>
   <div class="header-date" id="today-date"></div>
@@ -342,6 +342,18 @@ const DATA = {
       {id:10,name:'VALENTIN',pedidos:1,albaran:1,factura:1,ruedas:9,euros:235,realizada:0,llamada:0,tel:2,web:1},
     ]},
   ]},
+  mayo:{label:'Mayo',semanas:[
+    {id:'MY-S1',label:'S1 4-8may',agents:[
+      {id:16,name:'ALMACEN',pedidos:0,albaran:0,factura:4,ruedas:6,euros:672,realizada:0,llamada:0,tel:2,web:0},
+      {id:9,name:'ANA',pedidos:4,albaran:32,factura:8,ruedas:72,euros:4709,realizada:0,llamada:16,tel:6,web:13},
+      {id:42,name:'DAYANA',pedidos:1,albaran:4,factura:23,ruedas:-16,euros:-1176,realizada:0,llamada:0,tel:0,web:1},
+      {id:44,name:'ALBERTO',pedidos:4,albaran:217,factura:44,ruedas:396,euros:27074,realizada:0,llamada:4,tel:0,web:83},
+      {id:53,name:'JESUS',pedidos:14,albaran:43,factura:14,ruedas:122,euros:7849,realizada:4,llamada:48,tel:15,web:33},
+      {id:71,name:'ANDREA',pedidos:19,albaran:341,factura:70,ruedas:598,euros:40468,realizada:1,llamada:44,tel:6,web:128},
+      {id:81,name:'INIGO',pedidos:19,albaran:112,factura:75,ruedas:413,euros:24704,realizada:0,llamada:32,tel:46,web:144},
+      {id:10,name:'VALENTIN',pedidos:4,albaran:1,factura:2,ruedas:14,euros:834,realizada:0,llamada:6,tel:3,web:3},
+    ]},
+  ]},
 };
 
 // ── TURNOS CORREGIDOS (turno mayoritario + cambios de día) ────────────────────
@@ -436,6 +448,11 @@ const TURNOS = {
   'A-S4': {
     81:{turno:'A',cambios:[]},
     9:{turno:'B',cambios:[]},
+    71:{turno:'C',cambios:[]},
+  },
+  'MY-S1': {
+    81:{turno:'B',cambios:[]},
+    9:{turno:'A',cambios:[]},
     71:{turno:'C',cambios:[]},
   },
 };
@@ -678,3 +695,4 @@ update();
 </script>
 </body>
 </html>
+
